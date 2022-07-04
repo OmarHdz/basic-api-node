@@ -1,8 +1,47 @@
 
+require("dotenv").config()
 const express = require("express")
 const app = express()
 const mongoose = require("mongoose")
 
+const username = encodeURIComponent(process.env.MONGO_ATLAS_USER)
+const password = encodeURIComponent(process.env.MONGO_ATLAS_PSSWRD)
+const cluster = process.env.MONGO_ATLAS_CLUSTER
+const authSource = process.env.MONGO_ATLAS_AUTHSOURCE
+const selectDb = process.env.MONGO_ATLAS_DB
+let uri = `mongodb+srv://${username}:${password}@${cluster}/${selectDb}?authSource=${authSource}`
+
+const accountSchema = new mongoose.Schema({
+	_id: String,
+	account_id: Number,
+	limit: Number,
+	products: Array
+})
+const MyModel = new mongoose.model(selectDb, accountSchema, "accounts")
+
+app.get("/db/:idaccount", function (req, res) {
+	mongoose.connect(uri, { useNewUrlParser: true })
+		.then(()=>{
+		console.log("Database Connected")
+		console.log("recibi peticion")
+
+		const idaccounturl = req.params.idaccount
+		//MyModel.find({ account_id : 977982 }).then(result => {
+		MyModel.find({ account_id : Number(idaccounturl) }).then(result => {
+			console.log(result)
+			res.json(result[0])
+			console.log("Se logro")
+			mongoose.connection.close()
+		}).catch(err => {
+			console.log("Hubo un error")
+			console.log(err)
+		})
+			}).catch(err => {
+				console.error(err)
+			})
+
+	//console.log(res)
+})
 app.use(express.json())
 
 let respuesta = [
